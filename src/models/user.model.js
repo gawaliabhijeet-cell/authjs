@@ -1,0 +1,35 @@
+import mongoose from "mongoose";
+import { verify } from "node:crypto";
+
+
+const UserSchema = new mongoose.Schema({
+    UserName: {
+        type: String,
+        required: [true, "please a give me username"],
+        unique: true,
+        
+    },
+    email :{
+        type: String,
+        required: [true, "please a give me email"],
+        unique: true,
+        lowercase: true
+    },
+    password :{
+        type: String,
+        required: [true, "please a give me password"],
+        
+    },
+    isverified :{
+        type: Boolean,
+        default: fales
+    },
+    isAdmin :{
+        type: Boolean,
+        default: fales
+    },
+    forgotPasswordToken: String,
+    forgotPasswordTokenExpiry: Date,
+    verifyToken: String,
+    verifyTokenEpiry: Date
+})
