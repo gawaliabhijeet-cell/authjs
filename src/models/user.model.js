@@ -33,3 +33,7 @@ const UserSchema = new mongoose.Schema({
     verifyToken: String,
     verifyTokenEpiry: Date
 })
+
+const User = mongoose.models.users || mongoose.model("users", UserSchema)
+
+export default User
