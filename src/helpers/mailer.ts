@@ -6,6 +6,7 @@ const transporter = nodemailer.createTransport({
   host: process.env.MAILTRAP_HOST,
   port: Number(process.env.MAILTRAP_PORT),
   secure: false,
+
   auth: {
     user: process.env.MAILTRAP_USER,
     pass: process.env.MAILTRAP_PASS,
@@ -23,38 +24,58 @@ export const sendEmail = async ({
 }) => {
   try {
     // Generate token
-    const hashedToken = await bcrypt.hash(userId.toString(), 10);
+    const hashedToken = await bcrypt.hash(
+      userId.toString(),
+      10
+    );
 
-    // Save token in database
+    // Save token
     if (emailType === "VERIFY") {
       await User.findByIdAndUpdate(userId, {
         verifyToken: hashedToken,
-        verifyTokenExpiry: Date.now() + 3600000, // 1 hour
-      });
-    } else if (emailType === "RESET") {
-      await User.findByIdAndUpdate(userId, {
-        forgotPasswordToken: hashedToken,
-        forgotPasswordTokenExpiry: Date.now() + 3600000, // 1 hour
+        verifyTokenExpiry: new Date(
+          Date.now() + 60 * 60 * 1000
+        ),
       });
     }
 
-    // Create verification/reset URL
+    if (emailType === "RESET") {
+      await User.findByIdAndUpdate(userId, {
+        forgotPasswordToken: hashedToken,
+        forgotPasswordTokenExpiry: new Date(
+          Date.now() + 60 * 60 * 1000
+        ),
+      });
+    }
+
+    // URL
     const actionUrl =
       emailType === "VERIFY"
-        ? `${process.env.DOMAIN}/verifyemail?token=${hashedToken}`
-        : `${process.env.DOMAIN}/resetpassword?token=${hashedToken}`;
+        ? `${process.env.DOMAIN}/verifyemail?token=${encodeURIComponent(
+            hashedToken
+          )}`
+        : `${process.env.DOMAIN}/resetpassword?token=${encodeURIComponent(
+            hashedToken
+          )}`;
 
-    // Email content
     const mailOptions = {
       from: `"${process.env.MAIL_FROM_NAME}" <${process.env.MAIL_FROM_EMAIL}>`,
+
       to: email,
+
       subject:
         emailType === "VERIFY"
           ? "Verify your email"
           : "Reset your password",
 
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
+        <div style="
+          font-family: Arial, sans-serif;
+          max-width: 600px;
+          margin: auto;
+          padding: 30px;
+        ">
+
           <h2>
             ${
               emailType === "VERIFY"
@@ -65,11 +86,13 @@ export const sendEmail = async ({
 
           <p>Hello,</p>
 
-          ${
-            emailType === "VERIFY"
-              ? `<p>Click the button below to verify your email address.</p>`
-              : `<p>Click the button below to reset your password.</p>`
-          }
+          <p>
+            ${
+              emailType === "VERIFY"
+                ? "Click the button below to verify your email address."
+                : "Click the button below to reset your password."
+            }
+          </p>
 
           <a
             href="${actionUrl}"
@@ -80,7 +103,6 @@ export const sendEmail = async ({
               color: white;
               text-decoration: none;
               border-radius: 5px;
-              margin: 15px 0;
             "
           >
             ${
@@ -90,23 +112,39 @@ export const sendEmail = async ({
             }
           </a>
 
-          <p>This link will expire in 1 hour.</p>
+          <p>
+            This link will expire in 1 hour.
+          </p>
 
-          <p>If you did not request this, you can safely ignore this email.</p>
+          <p>
+            If you did not request this, you can safely ignore this email.
+          </p>
 
-          <p>Thanks,<br />${process.env.MAIL_FROM_NAME}</p>
+          <p>
+            Thanks,<br />
+            ${process.env.MAIL_FROM_NAME}
+          </p>
+
         </div>
       `,
     };
 
-    // Send email
-    const mailResponse = await transporter.sendMail(mailOptions);
+    const mailResponse =
+      await transporter.sendMail(mailOptions);
 
-    console.log("Email sent:", mailResponse.messageId);
+    console.log(
+      "Email sent:",
+      mailResponse.messageId
+    );
 
     return mailResponse;
+
   } catch (error: any) {
-    console.error("Email sending error:", error);
+    console.error(
+      "Email sending error:",
+      error
+    );
+
     throw new Error(error.message);
   }
 };

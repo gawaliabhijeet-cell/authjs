@@ -1,50 +1,35 @@
 import mongoose from "mongoose";
 
-let isConnected = false;
+const MONGO_URL = process.env.MONGO_URL!;
+
+if (!MONGO_URL) {
+  throw new Error("MONGO_URL is not defined in .env");
+}
 
 export async function connect() {
-    if (
-        isConnected &&
-        mongoose.connection.readyState === 1
-    ) {
-        return mongoose.connection;
+  try {
+    // Already connected
+    if (mongoose.connection.readyState === 1) {
+      console.log("MongoDB already connected");
+      return;
     }
 
-    try {
-        console.log(
-            "Mongo URL exists:",
-            !!process.env.MONGO_URL
-        );
+    const connection = await mongoose.connect(MONGO_URL, {
+      serverSelectionTimeoutMS: 10000,
+    });
 
-        const connection = await mongoose.connect(
-            process.env.MONGO_URL!,
-            {
-                serverSelectionTimeoutMS: 10000,
-            }
-        );
+    console.log(
+      "MongoDB Connected:",
+      connection.connection.host
+    );
 
-        isConnected = true;
+    console.log(
+      "Database Name:",
+      connection.connection.name
+    );
 
-        console.log(
-            "MongoDB Connected:",
-            connection.connection.host
-        );
-
-        console.log(
-            "Database Name:",
-            connection.connection.db?.databaseName
-        );
-
-        return connection;
-
-    } catch (error) {
-        isConnected = false;
-
-        console.error(
-            "MongoDB connection failed:",
-            error
-        );
-
-        throw error;
-    }
+  } catch (error) {
+    console.error("MongoDB connection failed:", error);
+    throw error;
+  }
 }
