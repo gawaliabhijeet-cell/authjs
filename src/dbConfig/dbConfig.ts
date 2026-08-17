@@ -1,24 +1,50 @@
 import mongoose from "mongoose";
-import dotenv from "dotenv";
 
-dotenv.config();
+let isConnected = false;
 
 export async function connect() {
+    if (
+        isConnected &&
+        mongoose.connection.readyState === 1
+    ) {
+        return mongoose.connection;
+    }
+
     try {
-        console.log("Mongo URL exists:", !!process.env.MONGO_URL);
+        console.log(
+            "Mongo URL exists:",
+            !!process.env.MONGO_URL
+        );
 
         const connection = await mongoose.connect(
-            process.env.MONGO_URL!
+            process.env.MONGO_URL!,
+            {
+                serverSelectionTimeoutMS: 10000,
+            }
         );
+
+        isConnected = true;
 
         console.log(
             "MongoDB Connected:",
             connection.connection.host
         );
 
+        console.log(
+            "Database Name:",
+            connection.connection.db?.databaseName
+        );
+
+        return connection;
+
     } catch (error) {
-        console.log("MongoDB is not Connected");
-        console.error(error);
-        process.exit(1);
+        isConnected = false;
+
+        console.error(
+            "MongoDB connection failed:",
+            error
+        );
+
+        throw error;
     }
 }
