@@ -22,11 +22,11 @@ const UserSchema = new mongoose.Schema({
     },
     isverified :{
         type: Boolean,
-        default: fales
+        default: false
     },
     isAdmin :{
         type: Boolean,
-        default: fales
+        default: false
     },
     forgotPasswordToken: String,
     forgotPasswordTokenExpiry: Date,
