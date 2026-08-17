@@ -2,7 +2,6 @@ import { connect } from "@/dbConfig/dbConfig";
 import User from "@/models/user.model"
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { sendEmail } from "@/helpers/mailer";
 import jwt from "jsonwebtoken"
 connect()
 
